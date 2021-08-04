@@ -8,7 +8,7 @@ let width = 500;
 let height = 500;
 
 
-let MAX_DEPTH = 500;
+let MAX_DEPTH = 1000;
 
 let getMandelDepth = function(zx,zy,depth){
     for(let i = 0; i < depth; i++){

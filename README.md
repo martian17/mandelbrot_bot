@@ -1,7 +1,6 @@
 # picbot
 ## Invite link
 https://discord.com/api/oauth2/authorize?client_id=871983900866514954&permissions=8192&scope=bot%20applications.commands
-[comment]: <> (https://discord.com/oauth2/authorize?client_id=871983900866514954&scope=bot+applications.commands)
 
 ## developer instruction
 1. git clone this repo
