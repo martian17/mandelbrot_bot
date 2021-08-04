@@ -102,7 +102,7 @@ let zoom = 4/500;
 /*
 /?mandel 0 0 0.008
 */
-client.on("message", msg => {
+client.on("message", async msg => {
     let str = msg.content;
     if (str.slice(0,8) === "/?mandel") {
         //logging
@@ -113,12 +113,112 @@ client.on("message", msg => {
                     `contents: ${str}`);
         console.log("");
         let argv = str.split(/\s+/);
-        let real = parseFloat(argv[1]) || 0;
+        let real = parseFloat(argv[1]) || -0.81;
         let imag = parseFloat(argv[2]) || 0;
-        let zoom = parseFloat(argv[3]) || 1;
+        let zoom = parseFloat(argv[3]) || 0.0055;
         //reading the first argument
         let buff = getImage([real,imag],zoom,MAX_DEPTH);
-        msg.channel.send("asdfa",{files: [buff]});
+        let controls = await msg.channel.send(`real: ${real}  imaginary: ${imag}  zoom: ${zoom} unit/pizel`);
+        let imgmsg = await msg.channel.send("",{files: [buff]});
+        await controls.react('⏪');
+        await controls.react('⏫');
+        await controls.react('◀️');
+        await controls.react('🔼');
+        await controls.react('🔬');
+        await controls.react('🔭');
+        await controls.react('🔽');
+        await controls.react('▶️');
+        await controls.react('⏬');
+        await controls.react('⏩');
+/*😄 null
+⏩ null
+⏪ null
+⏫ null
+⏬ null
+▶️ null
+◀️ null
+🔼 null
+🔽 null
+⬅️ null
+➡️ null
+↔️ null
+🔍 null
+🔎 null
+➕ null
+➖ null
+🔚 null
+🌍 null
+🌎 null
+🌏 null
+🔭 null
+🔬 null
+⬆️ null
+⬇️ null*/
+        
+        const filter = (reaction, user) => {
+            console.log(reaction._emoji.name,reaction._emoji.id);
+            return true;
+        };
+        const collector = controls.createReactionCollector(filter, { time: 5*60*1000});//5 minutes
+        collector.on('collect', async (reaction,user) => {
+            reaction.users.remove(user.id);
+            let imgmsg0 = imgmsg;
+            switch(reaction._emoji.name){
+                case "⏪":
+                real -= width*zoom;
+                break;
+                case "⏫":
+                imag -= height*zoom;
+                break;
+                case "◀️":
+                real -= width/4*zoom;
+                break;
+                case "🔼":
+                imag -= height/4*zoom;
+                break;
+                case "🔬":
+                zoom *= 0.2;
+                break;
+                case "🔭":
+                zoom *= 2;
+                break;
+                case "🔽":
+                imag += height/4*zoom;
+                break;
+                case "▶️":
+                real += width/4*zoom;
+                break;
+                case "⏬":
+                imag += height*zoom;
+                break;
+                case "⏩":
+                real += width*zoom;
+                break;
+            }
+            controls.edit(`real: ${real}  imaginary: ${imag}  zoom: ${zoom} unit/pizel`);
+            buff = getImage([real,imag],zoom,MAX_DEPTH);
+            setTimeout(()=>imgmsg0.delete(),500);
+            imgmsg = await msg.channel.send("",{files: [buff]});
+            /*msg.channel.send("",{files: [buff]}).then((imgmsg1)=>{
+                imgmsg.delete();
+                imgmsg = imgmsg1;
+            });*/
+        });
+        collector.on('end', collected => {
+            console.log(`Collected ${collected.size} items`);
+        });
+        
+        //the alternative, which doesn't work
+        /*
+        sent.awaitReactions(filter, {max: 1000, time: 6000, errors: ['time'] })
+        .then(collected => {
+            console.log(collected);
+        })
+        .catch(collected => {
+            console.log(collected);
+            sent.reply('You reacted with neither a thumbs up, nor a thumbs down.');
+        });
+        */
     }
 });
 
