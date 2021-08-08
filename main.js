@@ -1,14 +1,15 @@
 const Discord = require('discord.js');
 const client = new Discord.Client();
-require('dotenv').config();
+require("dotenv").config();
 //canvas
 const { createCanvas, loadImage } = require('canvas');
+const mandelbrot_addon = require("./addon/build/Release/mandelbrot_core.node");
 
 let width = 500;
 let height = 500;
 
 
-let MAX_DEPTH = 1000;
+let MAX_DEPTH = 1500;
 
 let getMandelDepth = function(zx,zy,depth){
     for(let i = 0; i < depth; i++){
@@ -40,52 +41,18 @@ let alp = function(j){
 
 
 //the coordinate is the center coords
-let getImage = function(coord,zoom,itr){//could be c
+let getImage = function(coord,zoom,itr){
     let canvas = createCanvas(width,height);
     let ctx = canvas.getContext("2d");
     let imageData = ctx.getImageData(0,0,width,height);
-    let data = imageData.data;
-    console.log(`got the input ${coord} ${zoom} ${itr}`);
-    //let stepa = Math.floor(width*height*4/100);
-    for(let y = 0; y < height; y++){
-        for(let x = 0; x < width; x++){
-            let idx = (y*width+x)*4;
-            /*if(idx%stepa === 0){
-                console.log(`${Math.floor(100*idx/(width*height*4))}% complete`);
-            }*/
-            //put the value in here
-            let rr = (x-width/2)*zoom+coord[0];//real
-            let ii = (y-height/2)*zoom+coord[1];//imaginary
-            let zr = 0;
-            let zi = 0;
-            //let zr1,zi1;
-            let j = 0;
-            for(j = 0; j < itr; j++){
-                let zr1 = zr*zr-zi*zi+rr;
-                let zi1 = 2*zr*zi+ii;
-                if(zr1*zr1+zi1*zi1>4){//absolute value greater than 2 does not belong
-                    break;
-                }
-                zr = zr1;
-                zi = zi1;
-            }
-            //j is the number of iterations
-            if(j === itr){
-                data[idx+0] = 0;
-                data[idx+1] = 0;
-                data[idx+2] = 0;
-                data[idx+3] = 255;
-            }else{
-                data[idx+0] = red(j);
-                data[idx+1] = gre(j);
-                data[idx+2] = blu(j);
-                data[idx+3] = alp(j);
-            }
-        }
+    //making that c call
+    console.log(coord[0],coord[1],zoom,itr,width,height);
+    let buff = mandelbrot_addon.getImage(coord[0],coord[1],zoom,itr,width,height);
+    let data = new Uint8Array(buff);
+    for(let i = 0; i < data.length; i++){
+        imageData.data[i] = data[i];
     }
-    console.log("image generation done");
     ctx.putImageData(imageData,0,0);
-    
     //returns a buffer
     return canvas.toBuffer('image/png', { compressionLevel: 3, filters: canvas.PNG_FILTER_NONE });
 };

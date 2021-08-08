@@ -23,17 +23,25 @@
     } while(0)
 
 
+uint8_t flmz(double a){
+    int b = (int)floor(a);
+    if(b < 0){
+        b = 0;
+    }
+    return (uint8_t)b;
+}
+
 //colors
-int8_t red(int j){
-    return (int8_t)floor(sin((double)j/100)*255);
+uint8_t red(int j){
+    return flmz(sin((double)j/100)*255);
 };
-int8_t gre(int j){
-    return (int8_t)floor(sin((double)j/100+1)*255);
+uint8_t gre(int j){
+    return flmz(sin((double)j/100+1)*255);
 };
-int8_t blu(int j){
-    return (int8_t)floor(sin((double)j/100+2)*255);
+uint8_t blu(int j){
+    return flmz(sin((double)j/100+2)*255);
 };
-int8_t alp(int j){
+uint8_t alp(int j){
     return 255;
 };
 
@@ -41,18 +49,18 @@ int8_t alp(int j){
 
 //the main code
 //just using double for now, not __float128
-int8_t* getImage(double real, double imag, double zoom, int itr, int width, int height, size_t * buffsize){
+uint8_t* getImage(double real, double imag, double zoom, int itr, int width, int height, size_t * buffsize){
     //need to convert 'em to double for type consistency
     double dw = (double) width;
     double dh = (double) height;
-    *buffsize = sizeof(int8_t)*width*height*4;
-    int8_t* buffer = malloc(*buffsize);
-    printf("got the input [%f, %f] %f %d | %dx%d",real,imag,zoom,itr,width,height);
+    *buffsize = sizeof(uint8_t)*width*height*4;
+    uint8_t* buffer = malloc(*buffsize);
+    printf("got the input [%.10e, %.10e] %.10e %d | %dx%d\n",real,imag,zoom,itr,width,height);
     for(int y = 0; y < height; y++){//coords on the image buffer
         for(int x = 0; x < width; x++){
             int idx = (y*width+x)*4;
-            double rr = (x-dw/2)*zoom+coord[0];//real
-            double ii = (y-dh/2)*zoom+coord[1];//imaginary
+            double rr = (x-dw/2)*zoom+real;//real
+            double ii = (y-dh/2)*zoom+imag;//imaginary
             double zr = 0;
             double zi = 0;
             //let zr1,zi1;
@@ -79,9 +87,10 @@ int8_t* getImage(double real, double imag, double zoom, int itr, int width, int 
                 buffer[idx+2] = blu(j);
                 buffer[idx+3] = alp(j);
             }
+            //printf("%d, %d, [%d,%d,%d,%d], %d\n",itr,j,buffer[idx+0],buffer[idx+1],buffer[idx+2],buffer[idx+3],idx);
         }
     }
-    printf("image generation done");
+    printf("image generation done\n");
     return buffer;
     //conversion from plain buffer to png, which is yet to be implemented
     //ctx.putImageData(imageData,0,0);
@@ -107,18 +116,22 @@ getImage_wrapper(napi_env env, napi_callback_info info) {
     int32_t width;
     int32_t height;
     
-    napi_status napi_get_value_double(env,argv[0],&real);
-    napi_status napi_get_value_double(env,argv[1],&imag);
-    napi_status napi_get_value_double(env,argv[2],&zoom);
-    napi_status napi_get_value_int32 (env,argv[3],&itr);
-    napi_status napi_get_value_int32 (env,argv[4],&width);
-    napi_status napi_get_value_int32 (env,argv[5],&height);
+    //napi_status
+    napi_get_value_double(env,argv[0],&real);
+    napi_get_value_double(env,argv[1],&imag);
+    napi_get_value_double(env,argv[2],&zoom);
+    napi_get_value_int32 (env,argv[3],&itr);
+    napi_get_value_int32 (env,argv[4],&width);
+    napi_get_value_int32 (env,argv[5],&height);
     size_t buffsize;
-    int8_t* buff = getImage(real, imag, zoom, (int)itr, (int)width, (int)height, &buffsize);
+    uint8_t* buff = getImage(real, imag, zoom, (int)itr, (int)width, (int)height, &buffsize);
     printf("computation done\n");
-    
+    //verifying the result
+    printf("[%d,%d,%d,%d]\n",buff[0],buff[1],buff[2],buff[3]);
+    printf("[%d,%d,%d,%d]\n",buff[999996],buff[999997],buff[999998],buff[999999]);
+    printf("%d\n",buffsize);
     napi_value result;
-    napi_create_arraybuffer(env, buffsize, buff, &result);
+    NAPI_CALL(env, napi_create_external_arraybuffer(env, buff, buffsize, NULL, NULL, &result));
     return result;
     
     /*

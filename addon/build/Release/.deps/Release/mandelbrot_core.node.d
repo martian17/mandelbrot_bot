@@ -1,0 +1,1 @@
+cmd_Release/mandelbrot_core.node := ln -f "Release/obj.target/mandelbrot_core.node" "Release/mandelbrot_core.node" 2>/dev/null || (rm -rf "Release/mandelbrot_core.node" && cp -af "Release/obj.target/mandelbrot_core.node" "Release/mandelbrot_core.node")

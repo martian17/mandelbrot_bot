@@ -1,0 +1,1 @@
+cmd_Release/obj.target/mandelbrot_core.node := g++ -o Release/obj.target/mandelbrot_core.node -shared -pthread -rdynamic -m64  -Wl,-soname=mandelbrot_core.node -Wl,--start-group Release/obj.target/mandelbrot_core/addon.o Release/obj.target/mandelbrot_core/addon_node.o -Wl,--end-group 
